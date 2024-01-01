@@ -3,6 +3,7 @@
 import hashlib
 import uuid
 import random
+from datetime import datetime, timezone, timedelta
 
 from data_generator.data_generator_handler import DataGeneratorHandler
 from mining_objects.mining_utils import MiningUtils
@@ -39,14 +40,24 @@ if __name__ == "__main__":
 
     # choose the range of days to look back
     # number of days back start
-    days_back_start = 200
+    # days_back_start = 200
     # number of days forward since end day
     # for example start from 100 days ago and get 70 days from 100 days ago (100 days ago, 99 days ago, 98 days ago, etc.)
-    days_back_end = 199
+    # days_back_end = 199
+
+    # Let's make the days consistent across tests - we do NOT want to generate different validations sets for different models :) (rookie ML mistake)
+    fixed_start_date = datetime(2023, 6, 14, tzinfo=timezone.utc)  # Specify UTC timezone
+    fixed_end_date_days = 1  # Choose the number of days ago for end_date
+    fixed_end_date = fixed_start_date + timedelta(days=fixed_end_date_days)
+
+    # TODO: is this redundant for start date?
+    # Calculate fixed end date
+    start_days_ago = (datetime.now(tz=timezone.utc) - fixed_start_date).days
+    end_days_ago = (datetime.now(tz=timezone.utc) - fixed_start_date).days
 
     ts_ranges = TimeUtil.convert_range_timestamps_to_millis(
         TimeUtil.generate_range_timestamps(
-            TimeUtil.generate_start_timestamp(days_back_start), days_back_end, True))
+            TimeUtil.generate_start_timestamp(start_days_ago), end_days_ago, True))
 
     data_structure = ValiUtils.get_standardized_ds()
 
