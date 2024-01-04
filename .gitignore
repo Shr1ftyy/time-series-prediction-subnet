@@ -2,6 +2,10 @@
 *.json
 *.pickle
 
+# models and swap
+*.h5
+*.swp
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
