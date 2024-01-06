@@ -72,6 +72,23 @@ if __name__ == "__main__":
     '''
 
     mining_models = {
+
+        "avg model" : {
+            "model_dir": "model_v4_1.h5",
+            "window_size": 100,
+            "id": "69",
+            "features": BaseMiningModel.base_model_dataset,
+            "prediction_fx": MiningUtils.avg_model_predict,
+            "rows": 601
+        },
+        "custom model" : {
+            "model_dir": "model1.h5",
+            "window_size": 100,
+            "id": 0,
+            "features": BaseMiningModel.base_model_dataset,
+            "prediction_fx": MiningUtils.open_model_v4_prediction_generation,
+            "rows": 601
+        },
         "1": {
             "model_dir": "model_v4_1.h5",
             "window_size": 100,
@@ -188,6 +205,8 @@ if __name__ == "__main__":
                 predicted_closes = mining_details["prediction_fx"](samples,
                                                                 mining_details,
                                                                 client_request.prediction_size)
+
+                # print(f"{model_name} predictions: {predicted_closes}")
 
                 output_uuid = str(uuid.uuid4())
                 miner_uuid = "miner" + str(mining_details["id"])

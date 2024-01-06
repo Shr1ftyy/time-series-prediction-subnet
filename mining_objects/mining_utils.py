@@ -107,3 +107,54 @@ class MiningUtils:
 
         predicted_closes = predicted_closes.T.tolist()[0]
         return predicted_closes
+
+    # method which takes the average between each prediction and last price as the outputs for each price
+    @staticmethod
+    def avg_model_predict(samples, mining_details, prediction_size):
+        model_samples = ValiUtils.get_standardized_ds()
+        # trim the samples to the number of rows thats supposed to be for the current model
+        for i in range(len(samples)):
+            model_samples[i] = samples[i][-mining_details["rows"]:]
+
+        model_samples = np.array(model_samples)
+        prep_dataset = mining_details["features"](model_samples)
+        # leverage base mining model class to generate predictions
+        base_mining_model = BaseMiningModel(len(prep_dataset.T)) \
+            .set_window_size(mining_details["window_size"]) \
+            .set_model_dir(mining_details["model_dir"]) \
+            .load_model()
+
+        # scale the data to 0 - 1
+        sds_ndarray = samples.T
+        scaler = MinMaxScaler(feature_range=(0, 1))
+
+        scaled_data = scaler.fit_transform(sds_ndarray)
+        scaled_data = scaled_data.T
+        prep_dataset_cp = BaseMiningModel.base_model_dataset(scaled_data)
+
+        # generate equally sloped line between last close and predicted end close
+        last_close = prep_dataset_cp.T[0][len(prep_dataset_cp) - 1]
+        predicted_close = base_mining_model.predict(prep_dataset_cp, )[0].tolist()[0]
+        total_movement = predicted_close - last_close
+        total_movement_increment = total_movement / prediction_size
+
+        predicted_closes = []
+        curr_price = last_close
+        for x in range(prediction_size):
+            last_price = curr_price
+            curr_price += total_movement_increment[0]
+            pred = (last_price + curr_price) / 2
+            # print(f"last price: {last_price}, curr price: {curr_price}, pred: {pred}")
+            predicted_closes.append(pred)
+        
+        close_column = samples[1].reshape(-1, 1)
+
+        scaler = MinMaxScaler()
+        scaler.fit(close_column)
+
+        # inverse the scale back to raw closing price scale
+        reshaped_predicted_closes = np.array(predicted_closes).reshape(-1, 1)
+        predicted_closes = scaler.inverse_transform(reshaped_predicted_closes)
+
+        predicted_closes = predicted_closes.T.tolist()[0]
+        return predicted_closes
